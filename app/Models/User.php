@@ -13,9 +13,12 @@ class User extends Authenticatable
 
     protected $table = 'users'; // Nom de la table
 
-    protected $primaryKey = 'use_id'; // Clé primaire 
+    protected $primaryKey = 'use_id'; // Clé primaire personnalisée
 
-    public $timestamps = true; // Active les timestamps 
+    public $incrementing = true; // La clé primaire est auto-incrémentée
+    protected $keyType = 'int'; // Type de la clé
+
+    public $timestamps = true; // Active les timestamps (created_at, updated_at)
 
     protected $fillable = [
         'use_username',
@@ -25,9 +28,10 @@ class User extends Authenticatable
 
     protected $hidden = [
         'use_password',
+        'use_id',
     ];
 
-
+    // Indique à Laravel d'utiliser la bonne colonne pour l'authentification
     public function getAuthPassword()
     {
         return $this->use_password;
