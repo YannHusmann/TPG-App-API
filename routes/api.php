@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StopController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API routes are working!']);
@@ -29,4 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stops/all', [StopController::class, 'getAllStop']);
     // Récupérer un arrêt par son ID
     Route::get('/stops/{id}', [StopController::class, 'getStopById']);
+    // Gestion des signalements
+    Route::post('/reports', [ReportController::class, 'createReport']);
+    Route::get('/reports', [ReportController::class, 'getMyReports']);
+    Route::put('/reports/{id}', [ReportController::class, 'updateReport']);
+    Route::delete('/reports/{id}', [ReportController::class, 'deleteReport']);
+    Route::get('/reports/all', [ReportController::class, 'getAllReports']);
 });

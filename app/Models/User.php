@@ -37,4 +37,12 @@ class User extends Authenticatable
     {
         return $this->use_password;
     }
+
+    public function getRoleAttribute()
+    {
+        return $this->use_role;
+    }
+
+    
+
 }

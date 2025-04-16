@@ -58,7 +58,6 @@ class StopController extends Controller
         }
     }
 
-    // 🔹 Récupérer un arrêt par ID
     public function getStopById(Request $request, $id)
     {
         \Log::info('getStopById appelé');

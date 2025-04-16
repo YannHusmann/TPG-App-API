@@ -47,7 +47,7 @@ class ReportController extends Controller
     ]);
     }
 
-    public function getMyReport() {
+    public function getMyReports() {
         $reports = Report::where('rep_use_id', Auth::id())
         ->with(['stop', 'route'])
         ->orderByDesc('created_at')
