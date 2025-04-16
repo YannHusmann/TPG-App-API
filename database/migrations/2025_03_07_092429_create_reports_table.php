@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreign('rep_sto_id')->references('sto_id')->on('stops')->onDelete('set null');
             $table->foreignId('rep_rou_id')->nullable()->references('rou_id')->on('routes')->onDelete('set null');
             $table->longText('rep_message');
+            $table->enum('rep_status', ['envoyé', 'en traitement', 'traité'])->default('envoyé');
             $table->timestamps();
         });
 

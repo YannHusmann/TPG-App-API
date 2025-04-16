@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('use_username', 255);
             $table->string('use_email', 255);
             $table->string('use_password', 255);
+            $table->enum('use_role', ['admin', 'user'])->default('user');
             $table->timestamps();
         });
     }
