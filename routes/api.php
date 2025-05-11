@@ -5,6 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StopController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API routes are working!']);
@@ -15,6 +17,12 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Route d'inscription
 Route::post('/register', [UserController::class, 'register']);
+
+// Route forgot password
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+
+// Route reset password
+Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
 // Routes protégées par Sanctum
 Route::middleware('auth:sanctum')->group(function () {
