@@ -20,5 +20,11 @@ class Stop extends Model
         'sto_country',
         'sto_latitude',
         'sto_longitude',
+        'sto_actif',
     ];
+    public function routes()
+        {
+            return $this->belongsToMany(Route::class, 'route_stop', 'stop_id', 'route_id');
+        }
+
 }

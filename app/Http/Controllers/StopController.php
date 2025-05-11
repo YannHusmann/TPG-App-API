@@ -8,7 +8,7 @@ use App\Models\Stop;
 
 class StopController extends Controller
 {
-        public function getNearbyStops(Request $request)
+    public function getNearbyStops(Request $request)
     {
         \Log::info('getNearbyStops appelé');
         \Log::info('Données reçues :', $request->all());
@@ -22,9 +22,9 @@ class StopController extends Controller
         }
 
         try {
-            // Correction des noms de colonnes dans la requête
             $stops = DB::table('stops')
                 ->select('*', DB::raw("(6371 * acos(cos(radians(?)) * cos(radians(sto_latitude)) * cos(radians(sto_longitude) - radians(?)) + sin(radians(?)) * sin(radians(sto_latitude)))) AS distance"))
+                ->where('sto_actif', 'Y')
                 ->orderBy('distance')
                 ->limit(5)
                 ->setBindings([$latitude, $longitude, $latitude])
@@ -33,7 +33,6 @@ class StopController extends Controller
             \Log::info('Arrêts trouvés :', $stops->toArray());
 
             return response()->json(['data' => $stops], 200);
-
         } catch (\Exception $e) {
             \Log::error('Erreur SQL:', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Erreur interne du serveur'], 500);
@@ -46,37 +45,32 @@ class StopController extends Controller
         \Log::info('Données reçues :', $request->all());
 
         try {
-            $stops = DB::table('stops')->select('*')->get();
+            $stops = DB::table('stops')
+                ->where('sto_actif', 'Y')
+                ->get();
 
             \Log::info('Arrêts trouvés :', $stops->toArray());
 
             return response()->json(['data' => $stops], 200);
-
         } catch (\Exception $e) {
             \Log::error('Erreur SQL:', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Erreur interne du serveur'], 500);
         }
     }
 
-    public function getStopById(Request $request, $id)
+    public function getStopByName(Request $request)
     {
-        \Log::info('getStopById appelé');
-        \Log::info('Données reçues :', $request->all());
+        $query = $request->query('q');
 
-        try {
-            $stop = DB::table('stops')->where('sto_id', $id)->first();
-
-            if (!$stop) {
-                \Log::error('Erreur : Arrêt non trouvé');
-                return response()->json(['error' => 'Arrêt non trouvé'], 404);
-            }
-
-            \Log::info('Arrêt trouvé :', (array) $stop);
-
-            return response()->json($stop);
-        } catch (\Exception $e) {
-            \Log::error('Erreur SQL:', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Erreur interne du serveur'], 500);
+        if (!$query) {
+            return response()->json(['error' => 'Le paramètre de recherche est requis.'], 400);
         }
+
+        $stops = DB::table('stops')
+            ->where('sto_actif', 'Y')
+            ->where('sto_name', 'like', '%' . $query . '%')
+            ->get();
+
+        return response()->json(['data' => $stops], 200);
     }
 }

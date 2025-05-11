@@ -13,9 +13,7 @@ return new class extends Migration
     {
         Schema::create('routes', function (Blueprint $table) {
             $table->id('rou_id');
-            $table->string('rou_code', 255)->unique();
-            $table->string('rou_name', 255);
-            $table->enum('rou_type', ["bus", "tram"]);
+            $table->string('rou_code', 255)->unique(); // devient unique seul
             $table->timestamps();
         });
     }

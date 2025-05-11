@@ -15,7 +15,7 @@ class ReportController extends Controller
             'rep_rou_id' => 'nullable|exists:routes,rou_id',
             'rep_message' => 'required|string|max:1000',
         ]);
-    
+
         $report = Report::create([
             'rep_use_id' => Auth::id(),
             'rep_sto_id' => $validated['rep_sto_id'],
@@ -104,6 +104,4 @@ class ReportController extends Controller
 
         return response()->json(['message' => 'Signalement supprimé avec succès']);
     }
-
-
 }

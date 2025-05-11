@@ -28,8 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stops', [StopController::class, 'getNearbyStops']);
     // Récupérer tous les arrêts
     Route::get('/stops/all', [StopController::class, 'getAllStop']);
-    // Récupérer un arrêt par son ID
-    Route::get('/stops/{id}', [StopController::class, 'getStopById']);
+    // Récupérer un arrêt par son nom
+    Route::get('/stops/name', [StopController::class, 'getStopByName']);
     // Gestion des signalements
     Route::post('/reports', [ReportController::class, 'createReport']);
     Route::get('/reports', [ReportController::class, 'getMyReports']);
