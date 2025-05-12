@@ -13,8 +13,8 @@ class UserFactory extends Factory
         return [
             'use_username' => $this->faker->userName,
             'use_email' => $this->faker->unique()->safeEmail,
-            'use_password' => Hash::make('password'), 
-            'use_role' => 'user', // ou 'admin' selon le test
+            'use_password' => Hash::make('password'),
+            'use_role' => $this->faker->randomElement(['user', 'admin']), 
         ];
     }
 }

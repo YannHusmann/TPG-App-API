@@ -41,11 +41,6 @@ class User extends Authenticatable
         return $this->use_password;
     }
 
-    public function getRoleAttribute()
-    {
-        return $this->use_role;
-    }
-
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
@@ -65,5 +60,10 @@ class User extends Authenticatable
     {
         return $this->use_email;
     }   
+
+    public function isAdmin(): bool
+    {
+        return $this->use_role === 'admin';
+    }
 
 }

@@ -123,18 +123,31 @@ class ReportControllerTest extends TestCase
 
     public function test_admin_can_see_all_reports()
     {
-        $admin = User::factory()->create(['use_role' => 'admin']);
-        $stop = Stop::factory()->create();
+        // Crée un utilisateur admin explicitement
+        $admin = User::factory()->create([
+            'use_role' => 'admin',
+            'use_email' => 'admin@example.com',
+            'use_username' => 'adminuser',
+        ]);
 
+        // Dump pour vérifier que le rôle est bien 'admin'
+        $this->assertEquals('admin', $admin->use_role);
+
+        // Crée un arrêt et quelques rapports
+        $stop = Stop::factory()->create();
         Report::factory()->count(3)->create([
             'rep_sto_id' => $stop->sto_id,
         ]);
 
+        // Authentifie-toi en tant qu’admin et appelle la route
         $response = $this->actingAs($admin, 'sanctum')->getJson('/api/reports/all');
 
-        $response->assertStatus(200)
-                 ->assertJsonStructure(['message', 'data']);
+        // Assertions
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['message', 'data']);
+        $this->assertGreaterThanOrEqual(3, count($response->json('data.data') ?? [])); // pagination
     }
+
 
     public function test_non_admin_cannot_see_all_reports()
     {
@@ -195,9 +208,8 @@ class ReportControllerTest extends TestCase
     public function test_report_creation_fails_if_stop_does_not_exist()
     {
         $user = User::factory()->create();
-        $this->actingAs($user, 'sanctum');
 
-        $response = $this->postJson('/api/reports', [
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', [
             'rep_sto_id' => 'INVALID',
             'rep_message' => 'Test sur arrêt inexistant',
             'rep_type' => 'graffiti',
@@ -240,7 +252,7 @@ class ReportControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/reports/filter?status=envoyé');
         $response->assertStatus(200);
-        $this->assertCount(1, $response->json('data'));
+        $this->assertCount(1, $response->json('data.data')); // Pagination fix
     }
 
     public function test_admin_can_change_report_status()
@@ -304,10 +316,10 @@ class ReportControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/reports/filter?from=' . now()->subDays(4)->toDateString() . '&to=' . now()->subDays(2)->toDateString());
         $response->assertStatus(200);
-        $this->assertCount(1, $response->json('data'));
+        $this->assertCount(1, $response->json('data.data'));
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/reports/filter?stop_id=' . $stop->sto_id);
         $response->assertStatus(200);
-        $this->assertGreaterThan(0, count($response->json('data')));
+        $this->assertGreaterThan(0, count($response->json('data.data')));
     }
 }
