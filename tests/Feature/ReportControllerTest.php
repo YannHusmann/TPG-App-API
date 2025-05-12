@@ -20,6 +20,9 @@ class ReportControllerTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', [
             'rep_sto_id' => $stop->sto_id,
             'rep_message' => 'Signalement test',
+            'rep_type' => 'graffiti',
+            'latitude' => 46.2044,
+            'longitude' => 6.1432,
         ]);
 
         $response->assertStatus(201)
@@ -52,11 +55,13 @@ class ReportControllerTest extends TestCase
             'rep_use_id' => $user->use_id,
             'rep_sto_id' => $stop->sto_id,
             'rep_message' => 'Ancien message',
+            'rep_type' => 'graffiti',
             'rep_status' => 'envoyé',
         ]);
 
         $response = $this->actingAs($user, 'sanctum')->putJson("/api/reports/{$report->rep_id}", [
             'rep_message' => 'Message modifié',
+            'rep_type' => 'vitre cassée',
         ]);
 
         $response->assertStatus(200)
@@ -77,6 +82,7 @@ class ReportControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')->putJson("/api/reports/{$report->rep_id}", [
             'rep_message' => 'Tentative de modification',
+            'rep_type' => 'graffiti',
         ]);
 
         $response->assertStatus(403);
@@ -153,11 +159,12 @@ class ReportControllerTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')->putJson("/api/reports/{$report->rep_id}", [
             'rep_message' => 'Tentative de modification',
+            'rep_type' => 'graffiti',
         ]);
 
         $response->assertStatus(404);
     }
-    
+
     public function test_user_cannot_delete_other_users_report()
     {
         $user = User::factory()->create();
@@ -179,11 +186,10 @@ class ReportControllerTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', [
-        ]);
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['rep_sto_id', 'rep_message']);
+        $response->assertJsonValidationErrors(['rep_sto_id', 'rep_message', 'rep_type']);
     }
 
     public function test_report_creation_fails_if_stop_does_not_exist()
@@ -194,11 +200,11 @@ class ReportControllerTest extends TestCase
         $response = $this->postJson('/api/reports', [
             'rep_sto_id' => 'INVALID',
             'rep_message' => 'Test sur arrêt inexistant',
+            'rep_type' => 'graffiti',
         ]);
 
         $response->assertStatus(422)->assertJsonValidationErrors(['rep_sto_id']);
     }
-
 
     public function test_admin_can_get_stats_per_stop()
     {
@@ -255,7 +261,7 @@ class ReportControllerTest extends TestCase
         ]);
     }
 
-        public function test_non_admin_cannot_get_stats()
+    public function test_non_admin_cannot_get_stats()
     {
         $user = User::factory()->create(['use_role' => 'user']);
 
@@ -304,6 +310,4 @@ class ReportControllerTest extends TestCase
         $response->assertStatus(200);
         $this->assertGreaterThan(0, count($response->json('data')));
     }
-
-
 }

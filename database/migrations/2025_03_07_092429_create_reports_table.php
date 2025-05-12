@@ -23,6 +23,8 @@ return new class extends Migration
             $table->enum('rep_type', ['vitre cassée', 'graffiti', 'éclairage défectueux', 'mobilier endommagé', 'panne d’affichage', 'déchets / saleté'
             ]);
             $table->enum('rep_status', ['envoyé', 'en traitement', 'traité'])->default('envoyé');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->timestamps();
         });
 

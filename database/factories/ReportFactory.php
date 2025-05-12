@@ -16,6 +16,18 @@ class ReportFactory extends Factory
             'rep_rou_id' => null,
             'rep_message' => $this->faker->sentence,
             'rep_status' => 'envoyé',
+            'rep_type' => $this->faker->randomElement([
+                'vitre cassée',
+                'graffiti',
+                'éclairage défectueux',
+                'mobilier endommagé',
+                'panne d’affichage',
+                'déchets / saleté'
+            ]),
+            'latitude' => $this->faker->latitude,
+            'longitude' => $this->faker->longitude,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
     }
 }

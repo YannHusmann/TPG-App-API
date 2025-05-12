@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Report;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Enums\ReportType;
+use Illuminate\Validation\Rule;
+
 
 
 class ReportController extends Controller
@@ -18,6 +21,9 @@ class ReportController extends Controller
             'rep_sto_id' => 'required|string|exists:stops,sto_id',
             'rep_rou_id' => 'nullable|exists:routes,rou_id',
             'rep_message' => 'required|string|max:1000',
+            'rep_type' => ['required', Rule::in(ReportType::values())],
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         $report = Report::create([
@@ -25,8 +31,12 @@ class ReportController extends Controller
             'rep_sto_id' => $validated['rep_sto_id'],
             'rep_rou_id' => $validated['rep_rou_id'] ?? null,
             'rep_message' => $validated['rep_message'],
+            'rep_type' => $validated['rep_type'],
             'rep_status' => 'envoyé',
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
         ]);
+
     
         return response()->json([
             'message' => 'Signalement enregistré',
@@ -79,9 +89,11 @@ class ReportController extends Controller
 
         $validated = $request->validate([
             'rep_message' => 'required|string|max:1000',
+            'rep_type' => ['required', Rule::in(ReportType::values())],
         ]);
 
         $report->rep_message = $validated['rep_message'];
+        $report->rep_type = $validated['rep_type'];
         $report->save();
 
         return response()->json([
@@ -89,6 +101,7 @@ class ReportController extends Controller
             'data' => $report
         ]);
     }
+
 
     public function deleteReport($id)
     {
@@ -117,7 +130,7 @@ class ReportController extends Controller
 
         $stats = Report::select('rep_sto_id', \DB::raw('count(*) as total'))
             ->groupBy('rep_sto_id')
-            ->with('stop:sto_id,sto_name') // optionnel
+            ->with('stop:sto_id,sto_name') 
             ->get();
 
         return response()->json(['data' => $stats]);
