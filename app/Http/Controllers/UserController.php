@@ -30,39 +30,48 @@ class UserController extends Controller
     // Mise à jour des informations utilisateur (nécessite authentification)
     public function update(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        $request->validate([
-            'use_username' => 'sometimes|string|max:255',
-            'use_email' => [
-                'sometimes',
-                'string',
-                'email',
-                'max:255',
-                function ($attribute, $value, $fail) use ($user) {
-                    $exists = User::where('use_email', $value)
-                                  ->where('use_id', '!=', $user->use_id)
-                                  ->exists();
-                    if ($exists) {
-                        $fail('L\'email est déjà utilisé par un autre utilisateur.');
-                    }
-                },
-            ],
-            'use_password' => 'sometimes|string|min:6',
+        if (!$user) {
+            return response()->json(['message' => 'Utilisateur non authentifié'], 401);
+        }
+
+        // Interdiction de modifier le rôle
+        if ($request->has('use_role')) {
+            return response()->json([
+                'message' => 'Vous ne pouvez pas modifier votre rôle.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'use_username' => ['sometimes', 'string', 'max:255'],
+            'use_email' => ['sometimes', 'email', 'max:255', 'unique:users,use_email,' . $user->use_id . ',use_id'],
+            'use_password' => ['sometimes', 'string', 'min:8'],
         ]);
 
-        if ($request->has('use_username')) {
-            $user->use_username = $request->use_username;
-        }
-        if ($request->has('use_email')) {
-            $user->use_email = $request->use_email;
-        }
-        if ($request->has('use_password')) {
-            $user->use_password = Hash::make($request->use_password);
+        if (isset($validated['use_password'])) {
+            $validated['use_password'] = Hash::make($validated['use_password']);
         }
 
-        $user->save();
+        // Ne rien faire si aucune donnée modifiée
+        if (empty($validated)) {
+            return response()->json(['message' => 'Aucune donnée à mettre à jour.'], 200);
+        }
 
-        return response()->json(['message' => 'Informations mises à jour avec succès', 'user' => $user]);
+        $user->update($validated);
+
+        return response()->json($user, 200);
     }
+
+
+    // Suppression de l'utilisateur (nécessite authentification)
+    public function delete(Request $request)
+    {
+        $user = Auth::user();
+        $user->delete();
+
+        return response()->json(['message' => 'Utilisateur supprimé avec succès']);
+    }
+
+    
 }

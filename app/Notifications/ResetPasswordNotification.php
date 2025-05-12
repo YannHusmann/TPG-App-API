@@ -33,6 +33,12 @@ class ResetPasswordNotification extends Notification
             ->action('Réinitialiser le mot de passe', $resetUrl)
             ->line('Ce lien expirera dans 60 minutes.')
             ->line('Si vous n\'avez pas demandé cette réinitialisation, aucune action n\'est requise.')
-            ->salutation('Cordialement, l\'équipe MerlApp');
+            ->salutation('Cordialement, l\'équipe TPGSignal');
     }
+
+    public function getResetUrl($notifiable)
+    {
+        return url('/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->use_email));
+    }
+
 }

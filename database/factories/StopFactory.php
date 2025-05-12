@@ -13,8 +13,9 @@ class StopFactory extends Factory
             'sto_name' => $this->faker->streetName,
             'sto_municipality' => $this->faker->city,
             'sto_country' => $this->faker->countryCode,
-            'sto_latitude' => $this->faker->latitude,
-            'sto_longitude' => $this->faker->longitude,
+            'sto_latitude' => $this->faker->latitude(46.1, 46.3), 
+            'sto_longitude' => $this->faker->longitude(6.1, 6.3),
+            'sto_actif' => 'Y',
         ];
     }
 }

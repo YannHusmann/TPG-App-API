@@ -26,12 +26,19 @@ Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
 // Routes protégées par Sanctum
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/reports/stats', [ReportController::class, 'getStatsPerStop']);
+    Route::get('/reports/filter', [ReportController::class, 'filterReports']);
+    Route::put('/reports/{id}/status', [ReportController::class, 'changeStatus']);
+
     // Déconnexion
     Route::post('/logout', [AuthController::class, 'logout']);
     // Récupérer l'utilisateur connecté
     Route::get('/me', [AuthController::class, 'me']);
     // Mise à jour des informations utilisateur
     Route::put('/user/update', [UserController::class, 'update']);
+    // supprimer le compte utilisateur
+    Route::delete('/user', [UserController::class, 'delete']);
+
     // Récupérer les arrêts à proximité
     Route::get('/stops', [StopController::class, 'getNearbyStops']);
     // Récupérer tous les arrêts
@@ -44,4 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reports/{id}', [ReportController::class, 'updateReport']);
     Route::delete('/reports/{id}', [ReportController::class, 'deleteReport']);
     Route::get('/reports/all', [ReportController::class, 'getAllReports']);
+    // Récupérer les arrêts d'une ligne de bus
+    Route::get('/stops/{stop}/routes', [StopController::class, 'getRoutes']);
+
 });

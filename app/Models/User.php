@@ -56,6 +56,14 @@ class User extends Authenticatable
         return $this->use_email;
     }
 
-    
+    public function routeNotificationForMail()
+    {
+        return $this->use_email;
+    }
+
+    public function getEmailForPasswordReset()
+    {
+        return $this->use_email;
+    }   
 
 }

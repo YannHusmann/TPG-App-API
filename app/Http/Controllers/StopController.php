@@ -22,13 +22,30 @@ class StopController extends Controller
         }
 
         try {
+            // Debug : afficher les stops en base
+            $debugStops = DB::table('stops')->get();
+            \Log::info('Tous les stops en base :', $debugStops->toArray());
+
             $stops = DB::table('stops')
-                ->select('*', DB::raw("(6371 * acos(cos(radians(?)) * cos(radians(sto_latitude)) * cos(radians(sto_longitude) - radians(?)) + sin(radians(?)) * sin(radians(sto_latitude)))) AS distance"))
-                ->where('sto_actif', 'Y')
+                ->select('*', DB::raw("
+                    (6371 * acos(
+                        cos(radians(?)) *
+                        cos(radians(sto_latitude)) *
+                        cos(radians(sto_longitude) - radians(?)) +
+                        sin(radians(?)) *
+                        sin(radians(sto_latitude))
+                    )) AS distance
+                "))
+                ->whereRaw('sto_actif = ?', ['Y'])
+                ->whereNotNull('sto_latitude')
+                ->whereNotNull('sto_longitude')
                 ->orderBy('distance')
                 ->limit(5)
-                ->setBindings([$latitude, $longitude, $latitude])
+                ->setBindings([$latitude, $longitude, $latitude, 'Y']) // 4 bindings au total
                 ->get();
+
+
+
 
             \Log::info('Arrêts trouvés :', $stops->toArray());
 
@@ -38,6 +55,7 @@ class StopController extends Controller
             return response()->json(['error' => 'Erreur interne du serveur'], 500);
         }
     }
+
 
     public function getAllStop(Request $request)
     {
@@ -73,4 +91,13 @@ class StopController extends Controller
 
         return response()->json(['data' => $stops], 200);
     }
+
+    public function getRoutes(Stop $stop)
+    {
+        return response()->json([
+            'stop' => $stop->sto_name,
+            'routes' => $stop->routes()->select('rou_id', 'rou_code')->get()
+        ]);
+    }
+
 }
