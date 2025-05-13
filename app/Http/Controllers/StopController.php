@@ -22,30 +22,24 @@ class StopController extends Controller
         }
 
         try {
-            // Debug : afficher les stops en base
-            $debugStops = DB::table('stops')->get();
-            \Log::info('Tous les stops en base :', $debugStops->toArray());
-
-            $stops = DB::table('stops')
-                ->select('*', DB::raw("
+            $stops = Stop::select('*')
+                ->selectRaw("
                     (6371 * acos(
                         cos(radians(?)) *
                         cos(radians(sto_latitude)) *
                         cos(radians(sto_longitude) - radians(?)) +
                         sin(radians(?)) *
                         sin(radians(sto_latitude))
-                    )) AS distance
-                "))
-                ->whereRaw('sto_actif = ?', ['Y'])
+                    )) AS distance", [$latitude, $longitude, $latitude])
+                ->where('sto_actif', 'Y')
                 ->whereNotNull('sto_latitude')
                 ->whereNotNull('sto_longitude')
+                ->with(['routes' => function ($q) {
+                    $q->select('routes.rou_id', 'rou_code');
+                }])
                 ->orderBy('distance')
                 ->limit(5)
-                ->setBindings([$latitude, $longitude, $latitude, 'Y']) // 4 bindings au total
                 ->get();
-
-
-
 
             \Log::info('Arrêts trouvés :', $stops->toArray());
 
@@ -55,6 +49,7 @@ class StopController extends Controller
             return response()->json(['error' => 'Erreur interne du serveur'], 500);
         }
     }
+
 
 
     public function getAllStop(Request $request)
@@ -63,8 +58,10 @@ class StopController extends Controller
         \Log::info('Données reçues :', $request->all());
 
         try {
-            $stops = DB::table('stops')
-                ->where('sto_actif', 'Y')
+            $stops = Stop::where('sto_actif', 'Y')
+                ->with(['routes' => function ($q) {
+                    $q->select('routes.rou_id', 'rou_code');
+                }])
                 ->get();
 
             \Log::info('Arrêts trouvés :', $stops->toArray());
@@ -75,6 +72,7 @@ class StopController extends Controller
             return response()->json(['error' => 'Erreur interne du serveur'], 500);
         }
     }
+
 
     public function getStopByName(Request $request)
     {
@@ -84,13 +82,16 @@ class StopController extends Controller
             return response()->json(['error' => 'Le paramètre de recherche est requis.'], 400);
         }
 
-        $stops = DB::table('stops')
-            ->where('sto_actif', 'Y')
+        $stops = Stop::where('sto_actif', 'Y')
             ->where('sto_name', 'like', '%' . $query . '%')
+            ->with(['routes' => function ($q) {
+                $q->select('routes.rou_id', 'rou_code');
+            }])
             ->get();
 
         return response()->json(['data' => $stops], 200);
     }
+
 
     public function getRoutes(Stop $stop)
     {

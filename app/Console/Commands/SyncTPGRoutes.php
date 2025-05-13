@@ -17,7 +17,7 @@ class SyncTPGRoutes extends Command
         $url = 'https://opendata.tpg.ch/api/explore/v2.1/catalog/datasets/montees-mensuelles-par-arret-par-ligne/exports/json?lang=fr&timezone=Europe%2FBerlin';
 
         try {
-            $response = Http::timeout(120)->get($url);
+            $response = Http::timeout(500)->get($url);
 
             if ($response->failed()) {
                 $this->error("Erreur lors du téléchargement du fichier JSON.");

@@ -9,6 +9,8 @@ use App\Models\Report;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Enums\ReportType;
 use Illuminate\Validation\Rule;
+use App\Models\User;
+use App\Notifications\ReportStatusChangedNotification;
 
 class ReportController extends Controller
 {
@@ -164,10 +166,23 @@ class ReportController extends Controller
             'status' => ['required', 'string'],
         ]);
 
-        $report = Report::findOrFail($id);
-        $report->rep_status = $request->input('status');
+        $report = Report::with('user')->findOrFail($id);
+        $oldStatus = $report->rep_status;
+        $newStatus = $request->input('status');
+
+        if ($oldStatus === $newStatus) {
+            return response()->json(['message' => 'Aucun changement détecté sur le statut']);
+        }
+
+        $report->rep_status = $newStatus;
         $report->save();
+
+        if ($report->user) {
+            $report->user->notify(new ReportStatusChangedNotification($newStatus, $report));
+        }
 
         return response()->json(['message' => 'Statut mis à jour']);
     }
+
+
 }
