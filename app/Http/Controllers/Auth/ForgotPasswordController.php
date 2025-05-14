@@ -9,10 +9,10 @@ class ForgotPasswordController extends Controller
 {
     public function sendResetLinkEmail(Request $request)
     {
-        $request->validate(['use_email' => 'required|email|exists:users,use_email']);
+        $request->validate(['email' => 'required|email|exists:users,use_email']);
 
         $status = Password::sendResetLink([
-            'email' => $request->use_email
+            'email' => $request->email
         ]);
 
         return $status === Password::RESET_LINK_SENT

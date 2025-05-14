@@ -6,7 +6,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StopController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API routes are working!']);
@@ -16,7 +15,6 @@ Route::get('/test', function () {
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/register', [UserController::class, 'register'])->middleware('throttle:5,1');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1');
-Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middleware('throttle:3,1');
 
 // Routes protégées
 Route::middleware('auth:sanctum')->group(function () {
