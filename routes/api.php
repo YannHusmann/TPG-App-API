@@ -38,8 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reports', [ReportController::class, 'createReport'])->middleware('throttle:5,1');
     Route::put('/reports/{id}', [ReportController::class, 'updateReport'])->middleware('throttle:5,1');
     Route::delete('/reports/{id}', [ReportController::class, 'deleteReport'])->middleware('throttle:5,1');
+    Route::get('/reports/types', [ReportController::class, 'getTypes']);
     Route::get('/reports', [ReportController::class, 'getMyReports']);
     Route::get('/reports/all', [ReportController::class, 'getAllReports']);
-    Route::get('/reports/types', [ReportController::class, 'getTypes']);
+    Route::get('/reports/{id}', [ReportController::class, 'getReportById']);
+
 });
 

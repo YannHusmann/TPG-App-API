@@ -73,6 +73,23 @@ class ReportController extends Controller
         ]);
     }
 
+    public function getReportById($id)
+    {
+        $report = Report::where('rep_id', $id)
+            ->where('rep_use_id', Auth::id())
+            ->with(['user', 'stop', 'route'])
+            ->first();
+
+        if (!$report) {
+            return response()->json(['message' => 'Signalement introuvable'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Détails du signalement',
+            'data'    => $report
+        ]);
+    }
+
     public function updateReport(Request $request, $id)
     {
         $report = Report::where('rep_id', $id)
@@ -137,22 +154,21 @@ class ReportController extends Controller
 
     public function filterReports(Request $request)
     {
-        $query = Report::query()->where('rep_use_id', Auth::id());
+        $user = Auth::user();
 
-        if ($request->filled('status')) {
+        $query = Report::with(['stop', 'route'])
+            ->where('rep_use_id', $user->use_id)
+            ->orderByDesc('created_at');
+
+        if ($request->has('status')) {
             $query->where('rep_status', $request->status);
         }
 
-        if ($request->filled(['from', 'to'])) {
-            $query->whereBetween('created_at', [$request->from, $request->to]);
-        }
-
-        if ($request->filled('stop_id')) {
-            $query->where('rep_sto_id', $request->stop_id);
-        }
+        $reports = $query->paginate(50);
 
         return response()->json([
-            'data' => $query->paginate(10)
+            'message' => 'Liste des signalements filtrés',
+            'data' => $reports,
         ]);
     }
 
