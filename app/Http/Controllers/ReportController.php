@@ -19,7 +19,7 @@ class ReportController extends Controller
     public function createReport(Request $request)
     {
         $validated = $request->validate([
-            'rep_sto_id'   => 'required|string|exists:stops,sto_id',
+            'rep_sto_id'   => 'nullable|string|exists:stops,sto_id',
             'rep_rou_id'   => 'nullable|exists:routes,rou_id',
             'rep_message'  => 'required|string|max:1000',
             'rep_type'     => ['required', Rule::in(ReportType::values())],
@@ -29,7 +29,7 @@ class ReportController extends Controller
 
         $report = Report::create([
             'rep_use_id'   => Auth::id(),
-            'rep_sto_id'   => $validated['rep_sto_id'],
+            'rep_sto_id'   => $validated['rep_sto_id'] ?? null,
             'rep_rou_id'   => $validated['rep_rou_id'] ?? null,
             'rep_message'  => $validated['rep_message'],
             'rep_type'     => $validated['rep_type'],
@@ -184,5 +184,11 @@ class ReportController extends Controller
         return response()->json(['message' => 'Statut mis à jour']);
     }
 
+    public function getTypes()
+    {
+        return response()->json([
+            'data' => ReportType::values()
+        ]);
+    }
 
 }

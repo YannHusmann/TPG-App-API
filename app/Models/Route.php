@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Stop;
+use App\Models\Route as RouteModel;
 
 class Route extends Model
 {

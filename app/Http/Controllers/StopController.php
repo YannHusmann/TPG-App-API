@@ -62,6 +62,7 @@ class StopController extends Controller
                 ->with(['routes' => function ($q) {
                     $q->select('routes.rou_id', 'rou_code');
                 }])
+                ->orderBy('sto_name', 'asc')
                 ->get();
 
             \Log::info('Arrêts trouvés :', $stops->toArray());

@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StopController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\RouteController;
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API routes are working!']);
@@ -31,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/stops/all', [StopController::class, 'getAllStop']);
     Route::get('/stops/name', [StopController::class, 'getStopByName']);
     Route::get('/stops/{stop}/routes', [StopController::class, 'getRoutes']);
+    Route::get('/routes/all', [RouteController::class, 'getAllRoutes']);
 
     // Signalements avec throttling
     Route::post('/reports', [ReportController::class, 'createReport'])->middleware('throttle:5,1');
@@ -38,5 +40,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/reports/{id}', [ReportController::class, 'deleteReport'])->middleware('throttle:5,1');
     Route::get('/reports', [ReportController::class, 'getMyReports']);
     Route::get('/reports/all', [ReportController::class, 'getAllReports']);
+    Route::get('/reports/types', [ReportController::class, 'getTypes']);
 });
 
