@@ -198,12 +198,14 @@ class ReportControllerTest extends TestCase
     public function test_report_creation_fails_with_invalid_data()
     {
         $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
 
-        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', []);
+        $response = $this->postJson('/api/reports', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['rep_sto_id', 'rep_message', 'rep_type']);
+        $response->assertJsonValidationErrors(['rep_message', 'rep_type']);
     }
+
 
     public function test_report_creation_fails_if_stop_does_not_exist()
     {
@@ -322,4 +324,61 @@ class ReportControllerTest extends TestCase
         $response->assertStatus(200);
         $this->assertGreaterThan(0, count($response->json('data.data')));
     }
+
+    public function test_report_creation_fails_with_invalid_type()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->postJson('/api/reports', [
+            'rep_message' => 'Un message valide',
+            'rep_type' => 'invalid_type'
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['rep_type']);
+    }
+
+    public function test_report_creation_succeeds_with_only_route_id()
+    {
+        $user = User::factory()->create();
+        $route = \App\Models\Route::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->postJson('/api/reports', [
+            'rep_message' => 'Dégât sur la ligne uniquement',
+            'rep_type' => \App\Enums\ReportType::values()[0],
+            'rep_rou_id' => $route->rou_id
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonFragment(['message' => 'Signalement enregistré']);
+    }
+
+    public function test_report_creation_fails_if_type_missing()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->postJson('/api/reports', [
+            'rep_message' => 'Message sans type'
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['rep_type']);
+    }
+
+    public function test_report_creation_fails_if_message_missing()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
+
+        $response = $this->postJson('/api/reports', [
+            'rep_type' => \App\Enums\ReportType::values()[0]
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['rep_message']);
+    }
+
 }

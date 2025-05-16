@@ -19,7 +19,7 @@ class ForgotPasswordControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->postJson('/api/forgot-password', [
-            'use_email' => $user->use_email,
+            'email' => $user->use_email, // on utilise 'email' ici
         ]);
 
         $response->assertStatus(200);
@@ -28,25 +28,24 @@ class ForgotPasswordControllerTest extends TestCase
         Notification::assertSentTo($user, ResetPasswordNotification::class);
     }
 
-
     public function test_password_reset_fails_for_non_existent_email()
     {
         $response = $this->postJson('/api/forgot-password', [
-            'use_email' => 'nonexistent@example.com',
+            'email' => 'nonexistent@example.com',
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['use_email']);
+        $response->assertJsonValidationErrors(['email']);
     }
 
     public function test_password_reset_fails_for_invalid_email_format()
     {
         $response = $this->postJson('/api/forgot-password', [
-            'use_email' => 'not-an-email',
+            'email' => 'not-an-email',
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['use_email']);
+        $response->assertJsonValidationErrors(['email']);
     }
 
     public function test_password_reset_fails_when_email_is_missing()
@@ -54,7 +53,7 @@ class ForgotPasswordControllerTest extends TestCase
         $response = $this->postJson('/api/forgot-password', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['use_email']);
+        $response->assertJsonValidationErrors(['email']);
     }
 
     public function test_password_reset_link_contains_token_and_email()
@@ -64,7 +63,7 @@ class ForgotPasswordControllerTest extends TestCase
         $user = User::factory()->create();
 
         $this->postJson('/api/forgot-password', [
-            'use_email' => $user->use_email,
+            'email' => $user->use_email,
         ]);
 
         Notification::assertSentTo($user, ResetPasswordNotification::class, function ($notification, $channels) use ($user) {
@@ -72,5 +71,4 @@ class ForgotPasswordControllerTest extends TestCase
             return str_contains($notification->toMail($user)->actionUrl, $url);
         });
     }
-
 }

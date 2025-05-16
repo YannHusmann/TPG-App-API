@@ -157,7 +157,8 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertStatus(403);
-        $response->assertJsonFragment(['message' => 'Vous ne pouvez pas modifier votre rôle.']);
+        $response->assertJsonFragment([
+            'message' => 'Vous ne pouvez pas modifier votre rôle.'
+        ]);
     }
-
 }

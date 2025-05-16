@@ -41,11 +41,15 @@ class UserController extends Controller
             return response()->json(['message' => 'Non authentifié'], 401);
         }
 
-        // Log les données brutes
+        if ($request->has('use_role')) {
+            return response()->json([
+                'message' => 'Vous ne pouvez pas modifier votre rôle.'
+            ], 403);
+        }
+
         Log::info('Request all()', $request->all());
         Log::info('Request files', $request->allFiles());
 
-        // Validation
         $validated = $request->validate([
             'use_username' => ['nullable', 'string', 'max:255'],
             'use_email'    => ['nullable', 'email', 'max:255', 'unique:users,use_email,' . $user->use_id . ',use_id'],
@@ -53,12 +57,10 @@ class UserController extends Controller
             'use_avatar'   => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif', 'max:2048'],
         ]);
 
-        // Mot de passe
         if (isset($validated['use_password'])) {
             $validated['use_password'] = Hash::make($validated['use_password']);
         }
 
-        // Avatar
         if ($request->hasFile('use_avatar')) {
             $old = $user->use_avatar;
             if ($old && Storage::disk('public')->exists(str_replace('/storage/', '', $old))) {
@@ -78,6 +80,7 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Mise à jour réussie', 'user' => $user], 200);
     }
+
 
     // Suppression de l'utilisateur
     public function delete(Request $request)

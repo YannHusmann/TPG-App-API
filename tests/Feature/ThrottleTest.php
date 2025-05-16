@@ -91,7 +91,7 @@ class ThrottleTest extends TestCase
     public function test_too_many_reset_password_requests_are_blocked()
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->postJson('/api/reset-password', [
+            $this->postJson('/reset-password', [
                 'email' => 'test@example.com',
                 'token' => 'invalid-token',
                 'password' => 'NewPassword1!',
@@ -99,7 +99,7 @@ class ThrottleTest extends TestCase
             ]);
         }
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson('/reset-password', [
             'email' => 'test@example.com',
             'token' => 'invalid-token',
             'password' => 'NewPassword1!',
