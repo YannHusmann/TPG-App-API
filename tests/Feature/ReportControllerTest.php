@@ -381,4 +381,161 @@ class ReportControllerTest extends TestCase
         $response->assertJsonValidationErrors(['rep_message']);
     }
 
+    public function test_user_can_create_report_with_image()
+    {
+        $user = User::factory()->create();
+        $stop = Stop::factory()->create();
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('degat.jpg');
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', [
+            'rep_sto_id' => $stop->sto_id,
+            'rep_message' => 'Signalement avec image',
+            'rep_type' => 'graffiti',
+            'images' => [$image],
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseCount('report_images', 1);
+    }
+
+    public function test_user_can_update_report_and_add_image()
+    {
+        $user = User::factory()->create();
+        $stop = Stop::factory()->create();
+
+        $report = Report::factory()->create([
+            'rep_use_id' => $user->use_id,
+            'rep_sto_id' => $stop->sto_id,
+            'rep_status' => 'envoyé',
+        ]);
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('ajout.jpg');
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/reports/{$report->rep_id}?_method=PUT", [
+            'rep_message' => 'MAJ + image',
+            'rep_type' => 'vitre cassée',
+            'images' => [$image],
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseCount('report_images', 1);
+    }
+
+    public function test_user_can_delete_image_from_report()
+    {
+        $user = User::factory()->create();
+        $report = Report::factory()->create(['rep_use_id' => $user->use_id, 'rep_status' => 'envoyé']);
+
+        $image = \App\Models\ReportImage::create([
+            'report_id' => $report->rep_id,
+            'path' => 'reports/test.jpg'
+        ]);
+
+        \Illuminate\Support\Facades\Storage::fake('public')->put('reports/test.jpg', 'fake content');
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/reports/{$report->rep_id}?_method=PUT", [
+            'rep_message' => 'MAJ sans image',
+            'rep_type' => 'graffiti',
+            'delete_ids' => [$image->id],
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseMissing('report_images', ['id' => $image->id]);
+    }
+
+    public function test_user_cannot_modify_images_if_report_treated()
+    {
+        $user = User::factory()->create();
+        $report = Report::factory()->create([
+            'rep_use_id' => $user->use_id,
+            'rep_status' => 'traité'
+        ]);
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('blocked.jpg');
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/reports/{$report->rep_id}?_method=PUT", [
+            'rep_message' => 'Tentative ajout',
+            'rep_type' => 'graffiti',
+            'images' => [$image],
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_report_response_includes_image_urls()
+    {
+        $user = User::factory()->create();
+        $report = Report::factory()->create(['rep_use_id' => $user->use_id]);
+        $image = \App\Models\ReportImage::create([
+            'report_id' => $report->rep_id,
+            'path' => 'reports/test.jpg'
+        ]);
+
+        $this->actingAs($user, 'sanctum');
+        $response = $this->getJson("/api/reports");
+
+        $response->assertStatus(200);
+        $data = $response->json('data')[0] ?? null;
+
+        $this->assertNotEmpty($data['images']);
+        $this->assertArrayHasKey('url', $data['images'][0]);
+        $this->assertStringContainsString('storage/reports/test.jpg', $data['images'][0]['url']);
+    }
+
+
+
+    public function test_user_can_create_report_with_multiple_images()
+    {
+        $user = User::factory()->create();
+        $stop = Stop::factory()->create();
+
+        $images = [
+            \Illuminate\Http\UploadedFile::fake()->image('img1.jpg'),
+            \Illuminate\Http\UploadedFile::fake()->image('img2.jpg'),
+        ];
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/reports', [
+            'rep_sto_id' => $stop->sto_id,
+            'rep_message' => 'Signalement multiple images',
+            'rep_type' => 'graffiti',
+            'images' => $images,
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseCount('report_images', 2);
+    }
+
+    public function test_report_update_fails_with_invalid_image()
+    {
+        $user = User::factory()->create();
+        $report = Report::factory()->create(['rep_use_id' => $user->use_id, 'rep_status' => 'envoyé']);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('fake.txt', 10); // fichier non image
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/reports/{$report->rep_id}?_method=PUT", [
+            'rep_message' => 'Tentative avec mauvais fichier',
+            'rep_type' => 'graffiti',
+            'images' => [$file],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['images.0']);
+    }
+
+    public function test_deleting_non_existing_image_is_silent()
+    {
+        $user = User::factory()->create();
+        $report = Report::factory()->create(['rep_use_id' => $user->use_id, 'rep_status' => 'envoyé']);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson("/api/reports/{$report->rep_id}?_method=PUT", [
+            'rep_message' => 'Suppression image fantôme',
+            'rep_type' => 'graffiti',
+            'delete_ids' => [9999], // image inexistante
+        ]);
+
+        $response->assertStatus(200);
+    }
+
+
 }

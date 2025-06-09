@@ -11,6 +11,8 @@ use App\Enums\ReportType;
 use Illuminate\Validation\Rule;
 use App\Models\User;
 use App\Notifications\ReportStatusChangedNotification;
+use App\Models\ReportImage;
+use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
@@ -25,6 +27,7 @@ class ReportController extends Controller
             'rep_type'     => ['required', Rule::in(ReportType::values())],
             'latitude'     => 'nullable|numeric|between:-90,90',
             'longitude'    => 'nullable|numeric|between:-180,180',
+            'images.*'     => 'image|max:2048',
         ]);
 
         $report = Report::create([
@@ -38,11 +41,22 @@ class ReportController extends Controller
             'longitude'    => $validated['longitude'] ?? null,
         ]);
 
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('reports', 'public');
+                ReportImage::create([
+                    'report_id' => $report->rep_id,
+                    'path' => $path,
+                ]);
+            }
+        }
+
         return response()->json([
             'message' => 'Signalement enregistré',
-            'data'    => $report
+            'data'    => $report->load('images')
         ], 201);
     }
+
 
     public function getAllReports()
     {
@@ -50,7 +64,7 @@ class ReportController extends Controller
             return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
-        $reports = Report::with(['user', 'stop', 'route'])
+        $reports = Report::with(['user', 'stop', 'route', 'images'])
             ->orderByDesc('created_at')
             ->paginate(10);
 
@@ -63,7 +77,7 @@ class ReportController extends Controller
     public function getMyReports()
     {
         $reports = Report::where('rep_use_id', Auth::id())
-            ->with(['stop', 'route'])
+            ->with(['stop', 'route', 'images'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -73,11 +87,12 @@ class ReportController extends Controller
         ]);
     }
 
+
     public function getReportById($id)
     {
         $report = Report::where('rep_id', $id)
             ->where('rep_use_id', Auth::id())
-            ->with(['user', 'stop', 'route'])
+            ->with(['user', 'stop', 'route', 'images'])
             ->first();
 
         if (!$report) {
@@ -89,6 +104,7 @@ class ReportController extends Controller
             'data'    => $report
         ]);
     }
+
 
     public function updateReport(Request $request, $id)
     {
@@ -107,17 +123,42 @@ class ReportController extends Controller
         $validated = $request->validate([
             'rep_message' => 'required|string|max:1000',
             'rep_type'    => ['required', Rule::in(ReportType::values())],
+            'images.*'    => 'image|max:2048',
+            'existing_images' => 'array',
+            'existing_images.*' => 'string'
         ]);
 
         $report->rep_message = $validated['rep_message'];
         $report->rep_type    = $validated['rep_type'];
         $report->save();
 
+        // Supprimer les anciennes images NON conservées
+        $existingUrls = $request->input('existing_images', []);
+        foreach ($report->images as $image) {
+            $fullUrl = url(Storage::url($image->path)); // http://domain/storage/...
+            if (!in_array($fullUrl, $existingUrls)) {
+                Storage::disk('public')->delete($image->path);
+                $image->delete();
+            }
+        }
+
+        // Ajouter les nouvelles images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('reports', 'public');
+                \App\Models\ReportImage::create([
+                    'report_id' => $report->rep_id,
+                    'path' => $path,
+                ]);
+            }
+        }
+
         return response()->json([
             'message' => 'Signalement modifié',
-            'data'    => $report
+            'data'    => $report->load('images')
         ]);
     }
+
 
     public function deleteReport($id)
     {
@@ -156,7 +197,7 @@ class ReportController extends Controller
     {
         $user = Auth::user();
 
-        $query = Report::with(['stop', 'route'])
+        $query = Report::with(['stop', 'route', 'images'])
             ->where('rep_use_id', $user->use_id)
             ->orderByDesc('created_at');
 
@@ -171,6 +212,7 @@ class ReportController extends Controller
             'data' => $reports,
         ]);
     }
+
 
     public function changeStatus($id, Request $request)
     {

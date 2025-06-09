@@ -43,4 +43,10 @@ class Report extends Model
     {
         return $this->belongsTo(Route::class, 'rep_rou_id', 'rou_id');
     }
+
+    public function images()
+    {
+        return $this->hasMany(ReportImage::class, 'report_id', 'rep_id');
+    }
+
 }
